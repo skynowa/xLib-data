@@ -1,0 +1,60 @@
+Preparing Your Application 
+
+First we give cross-plaform guidelines for how to build your application, before giving specific compiler parameters for each platform.
+
+Currently, Dr. Memory only supports 32-bit applications, so be sure to compile your target application as 32-bit.
+
+In order to obtain line number information, compile your target application with debugging information enabled. On Linux, Dr. Memory supports ELF files with DWARF2 line information. On Windows, Dr. Memory supports PDB debug information (produced by Visual Studio) as well as PECOFF files with DWARF2 line information (produced by MinGW gcc).
+
+You'll get better callstacks in error reports if you disable inlining. Dr. Memory should be able to determine callstacks in the presence of frame pointer optimizations (FPO) in most cases, but if you see strange callstacks in an optimized application consider disabling FPO.
+
+If your application links with a static library that was built with frame pointer optimizations and you observe missing frames on your callstacks, try running with the Dr. Memory runtime option -no_callstack_use_top_fp. This will add some additional overhead on malloc-intensive applications, but should eliminate skipped frames.
+ Linux
+
+Ensure your Linux installation is able to build 32-bit applications. On 64-bit Ubuntu you will want these packages:
+sudo apt-get install ia32-libs g++-multilib
+
+Dr. Memory currently only supports DWARF2 line information, not stabs, but DWARF2 is the default for modern versions of gcc.
+
+Here is a sample command line for compiling your application that combines all of the above recommendations:
+g++ -m32 -g -fno-inline -fno-omit-frame-pointer myfile1.cpp myfile2.cpp -o myapp
+ Windows Visual Studio
+
+Visual Studio builds 32-bit applications by default, so no action is required on that front.
+
+To include debug information, use the /Zi flag to the Visual Studio compiler. From the IDE, Press Alt-F7 to bring up the configuration properties of your build target. Under "Configuration Properties | C/C++ | General", the "Debug Information Format" entry should say "Program Database (/Zi)".
+ Release C Library Recommended
+
+While the debug C library (specified with the /MDd or /MTd flags) is supported, its use requires Dr. Memory to disable some of its error detection. The debug C library also prevents Dr. Memory from controlling the redzone size it places around heap allocations. The debug C heap checks will mostly be disabled as they overlap and can conflict with Dr. Memory's checks. It is recommended that the release version of the heap routines be used. Additionally, when using static debug versions of msvcrt (the /MTd flag), if your application does not have symbols then Dr. Memory will not be able to identify and avoid conflicts with the C library's own heap debugging facilities, which may lead to false positives and/or false negatives. Be sure to build with debugging information included.
+
+Thus, we recommend building your application with either the release DLL (/MD) or the release static (/MT) C library. From the Visual Studio IDE, the release library can be selected from Visual Studio's configuration dialog (press Alt-F7 to bring it up) under the "Configuration Properties | C/C++ | Code Generation | Runtime Library" settings. Change "Multi-threaded Debug DLL (/MDd)" to "Multi-threaded DLL (/MD)".
+
+If your application is C++, another step is necessary when using /MD to avoid the C++ Debug DLL: under "Configuration Properties | C/C++ | Preprocessor", remove "_DEBUG" from the list of "Preprocessor Definitions". It probably says "WIN32;_DEBUG;_CONSOLE" by default. Change it to "WIN32;_CONSOLE".
+ Disable Runtime Checks
+
+The Visual Studio compiler's /RTC1 flag can prevent Dr. Memory from reporting uninitialized reads of local variables, and the /RTC1 checks for uninitialized reads themselves may not catch everything that Dr. Memory finds. However, /RTC1 does perform additional stack checks that Dr. Memory does not, so for best results, your application should be run under Dr. Memory without /RTC1, and run natively with /RTC1.
+
+In the Visual Studio IDE, press Alt-F7 and then under "Configuration Properties | C/C++ | Code Generation" ensure "Basic Runtime Checks" says "Default".
+ Parameter Summary
+
+To disable inlining, use the /Ob0 parameter. In the Visual Studio IDE, press Alt-F7 and then under "Configuration Properties | C/C++ | Optimization" ensure "Inline Function Expansion" says "Disabled (/Ob0)".
+
+To disable frame pointer optimization, use the Oy- parameter. In the Visual Studio IDE, press Alt-F7 and then under "Configuration Properties | C/C++ | Optimization" ensure "Omit Frame Pointers" says "No (/Oy-)".
+
+Here is a sample command line for Visual Studio:
+cl /Zi /MT /EHsc /Oy- /Ob0 /Femyapp.exe *.cpp
+ Windows MinGW
+
+Dr. Memory supports 32-bit applications compiled with the MinGW gcc or g++ compilers, but will only provide line number information if DWARF2 debugging information is present. The default for MinGW gcc prior to version 4.3 is to use the stabs format, which is not supported by Dr. Memory. Pass the -ggdb option to gcc to generate DWARF2 format instead.
+
+You install the MinGW compiler in a Cygwin installation by running the Cygwin installer (setup.exe), searching for "mingw", opening Devel, and installing mingw-gcc-g++. Alternatively, MinGW can be installed on its own.
+
+For MinGW C++ applications, we recommending building with static libstdc++ libraries. Pass -static-libgcc -static-libstdc++ to g++ to request this. These static libraries contain frame pointer optimizations but Dr. Memory automatically enables the -no_callstack_use_top_fp runtime option for MinGW applications.
+
+Here is a sample command line for MinGW:
+i686-pc-mingw32-g++.exe -static-libgcc -static-libstdc++ -ggdb -o myapp.exe myfile1.cpp myfile2.cpp
+ Windows Cygwin: Not Supported
+
+Currently there is no support for applications built with Cygwin gcc or g++.
+
+The regular Dr. Memory build can be executed just fine from a Cygwin shell when targeting non-Cygwin applications.

@@ -1,0 +1,2 @@
+// suppress warnings
+va_list_usedBeforeStarted

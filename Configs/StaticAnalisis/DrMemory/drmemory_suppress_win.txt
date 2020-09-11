@@ -1,0 +1,23 @@
+#
+# File: drmemory_suppress_win.txt
+# Note: Dr. Memory suppression file
+#
+
+
+# Error #1000
+LEAK
+name=LEAK #1000 (Wi-Free error)
+...
+wi-free.exe!CreateBitmapFromImage
+wi-free.exe!create_img
+wi-free.exe!LoadImages
+wi-free.exe!main
+
+# Error #1001
+HANDLE LEAK
+name=HANDLE LEAK #1001 (Wi-Free error)
+...
+wi-free.exe!CreateBitmapFromImage
+wi-free.exe!create_img
+wi-free.exe!LoadImages
+wi-free.exe!main
