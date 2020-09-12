@@ -1,0 +1,6 @@
+StaticAnalisis/PVS-Studio/PVS-Studio.log
+StaticAnalisis/PVS-Studio/PVS-Studio_html/
+StaticAnalisis/Cppcheck/CppCheck.xml
+StaticAnalisis/Cppcheck/CppCheck_html/
+StaticAnalisis/ClangTidy/ClangTidy.yaml
+
