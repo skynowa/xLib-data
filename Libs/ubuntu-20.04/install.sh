@@ -1,4 +1,0 @@
-sudo apt-get update
-
-# sudo dpkg -i libcurl4-openssl-dev_7.68.0-1ubuntu2.2_amd64.deb
-sudo apt-get install -y  --no-install-recommends libcurl4-openssl-dev
